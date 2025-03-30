@@ -53,12 +53,12 @@ RUN : \
 # Build ITK
 RUN : \
     && cd /tmp/itk/build \
-    && make -j \
+    && make -j1 \
     && :
 # Install ITK
 RUN : \
     && cd /tmp/itk/build \
-    && make install \
+    && make -j1 install \
     && :
 
 # ANTs paper-base with ITK verificarlo compilation.
@@ -92,12 +92,12 @@ RUN : \
 # Build ANTs
 RUN : \
     && cd /tmp/ants/build \
-    && make -j \
+    && make -j1 \
     && :
 # Install ANTs
 RUN : \
     && cd /tmp/ants/build/ANTS-build \
-    && make install \
+    && make -j1 install \
     && :
 
 # Need to set library path to run tests

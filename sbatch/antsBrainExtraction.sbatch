@@ -1,11 +1,13 @@
 #!/bin/bash
 #SBATCH -J antsBrainExtraction
 #SBATCH --time=2:00:00
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=32G
 #SBATCH -o log/%x-%A-%a.out
 set -e
 set -u
+
+module load apptainer
 
 SUBJECT_ID=$(sed -n ${SLURM_ARRAY_TASK_ID}p < subject_ids.txt)
 echo "

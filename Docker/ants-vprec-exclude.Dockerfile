@@ -16,6 +16,9 @@ RUN : \
     zlib1g-dev \
     && :
 
+# Remove -march=native from verificarlo
+RUN sed -i 's/-march=native//g' /usr/local/bin/verificarlo
+
 # ANTs superbuild failed to build ITK with verificarlo. So, we build ITK externally.
 # ITK paper-base.
 ARG ITK_VERSION="paper-base"
@@ -48,6 +51,8 @@ RUN : \
     -DCMAKE_CXX_COMPILER=verificarlo-c++ \
     -DCMAKE_C_FLAGS="--verbose --exclude-file=/tmp/vprec-exclude.txt" \
     -DCMAKE_CXX_FLAGS="--verbose --exclude-file=/tmp/vprec-exclude.txt" \
+    -DITK_C_OPTIMIZATION_FLAGS="-march=x86-64" \ 
+    -DITK_CXX_OPTIMIZATION_FLAGS="-march=x86-64" \
     /tmp/itk/source \
     && :
 # Build ITK
@@ -85,6 +90,8 @@ RUN : \
     -DCMAKE_CXX_COMPILER=verificarlo-c++ \
     -DCMAKE_C_FLAGS="--verbose --exclude-file=/tmp/vprec-exclude.txt" \
     -DCMAKE_CXX_FLAGS="--verbose --exclude-file=/tmp/vprec-exclude.txt" \
+    -DANTS_C_OPTIMIZATION_FLAGS="-march=x86-64" \
+    -DANTS_CXX_OPTIMIZATION_FLAGS="-march=x86-64" \
     -DITK_DIR=/tmp/itk/build \
     -DUSE_SYSTEM_ITK=ON \
     /tmp/ants/source \

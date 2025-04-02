@@ -2,7 +2,7 @@
 #SBATCH --time=08:00:00
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=6G
-#SBATCH -o log/1111/%x-%A-%a.out
+#SBATCH -o log/0000/%x-%A-%a.out
 
 set -u
 set -e
@@ -11,12 +11,12 @@ module load apptainer
 
 SUBJECT_ID=$(sed -n ${SLURM_ARRAY_TASK_ID}p < subject_ids.txt)
 INPUT_IMG=${DATA_DIR}/derivatives/mri-registration-rp/antsBrainExtraction/sub-${SUBJECT_ID}/BrainExtractionBrain.nii.gz
-OUTPUT_DIR=${DATA_DIR}/derivatives/mri-registration-rp/1111/${EXPERIMENT_NAME}/sub-${SUBJECT_ID}
+OUTPUT_DIR=${DATA_DIR}/derivatives/mri-registration-rp/0000/${EXPERIMENT_NAME}/sub-${SUBJECT_ID}
 
 OUTPUT_FILE=${OUTPUT_DIR}/Warped.nii.gz
 if [ -e ${OUTPUT_FILE} ]; then
     echo "Registration already completed for sub-${SUBJECT_ID}"
-    rm log/1111/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}.out
+    rm log/0000/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}.out
     exit 0
 fi
 
@@ -46,8 +46,8 @@ ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS: $APPTAINERENV_ITK_GLOBAL_DEFAULT_NUMBER_OF
 "
 # Initial alignment
 mkdir -p ${OUTPUT_DIR}
-export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
-# export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
+# export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
+export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
 apptainer exec --cleanenv \
     -B ${DATA_DIR}:${DATA_DIR} \
     -B ${OUTPUT_DIR}:${OUTPUT_DIR} \
@@ -69,8 +69,8 @@ apptainer exec --cleanenv \
     --smoothing-sigmas 0vox
 
 # Rigid
-export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
-# export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
+# export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
+export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
 INPUT_IMG=${OUTPUT_DIR}/Aligned.nii.gz
 apptainer exec --cleanenv \
     -B ${DATA_DIR}:${DATA_DIR} \
@@ -92,8 +92,8 @@ apptainer exec --cleanenv \
     --smoothing-sigmas 3x2x1x0vox
 
 # Affine
-export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
-# export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
+# export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
+export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
 INPUT_IMG=${OUTPUT_DIR}/Rigid.nii.gz
 apptainer exec --cleanenv \
     -B ${DATA_DIR}:${DATA_DIR} \
@@ -115,8 +115,8 @@ apptainer exec --cleanenv \
     --smoothing-sigmas 3x2x1x0vox
 
 # Syn
-export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
-# export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
+# export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
+export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
 INPUT_IMG=${OUTPUT_DIR}/Affine.nii.gz
 apptainer exec --cleanenv \
     -B ${DATA_DIR}:${DATA_DIR} \

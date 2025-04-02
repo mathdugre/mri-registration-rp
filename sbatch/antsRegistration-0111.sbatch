@@ -1,9 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=antsRegistration-0111
-#SBATCH --time=48:00:00
+#SBATCH --time=08:00:00
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=32G
-#SBATCH -o log/%x-%A-%a.out
+#SBATCH --mem=6G
+#SBATCH -o log/0111/%x-%A-%a.out
 
 set -u
 set -e
@@ -12,12 +11,12 @@ module load apptainer
 
 SUBJECT_ID=$(sed -n ${SLURM_ARRAY_TASK_ID}p < subject_ids.txt)
 INPUT_IMG=${DATA_DIR}/derivatives/mri-registration-rp/antsBrainExtraction/sub-${SUBJECT_ID}/BrainExtractionBrain.nii.gz
-OUTPUT_DIR=${DATA_DIR}/derivatives/mri-registration-rp/antsRegistration-0111/${EXPERIMENT_NAME}/sub-${SUBJECT_ID}
+OUTPUT_DIR=${DATA_DIR}/derivatives/mri-registration-rp/0111/${EXPERIMENT_NAME}/sub-${SUBJECT_ID}
 
 OUTPUT_FILE=${OUTPUT_DIR}/Warped.nii.gz
 if [ -e ${OUTPUT_FILE} ]; then
     echo "Registration already completed for sub-${SUBJECT_ID}"
-    rm log/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}.out
+    rm log/0111/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}.out
     exit 0
 fi
 
@@ -61,7 +60,6 @@ apptainer exec --cleanenv \
     --winsorize-image-intensities [0.005,0.995] \
     --interpolation Linear \
     --random-seed 1 \
-    --write-interval-volumes 1 \
     --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Aligned.nii.gz] \
     --initial-moving-transform [${FIXED_IMG},${INPUT_IMG},1] \
     --transform Rigid[0.1] \
@@ -86,7 +84,6 @@ apptainer exec --cleanenv \
     --winsorize-image-intensities [0.005,0.995] \
     --interpolation Linear \
     --random-seed 1 \
-    --write-interval-volumes 1 \
     --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Rigid.nii.gz] \
     --transform Rigid[0.1] \
     --metric MI[${FIXED_IMG},${INPUT_IMG},1,32,Regular,0.25] \
@@ -110,7 +107,6 @@ apptainer exec --cleanenv \
     --winsorize-image-intensities [0.005,0.995] \
     --interpolation Linear \
     --random-seed 1 \
-    --write-interval-volumes 1 \
     --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Affine.nii.gz] \
     --transform Affine[0.1] \
     --metric MI[${FIXED_IMG},${INPUT_IMG},1,32,Regular,0.25] \
@@ -134,7 +130,6 @@ apptainer exec --cleanenv \
     --winsorize-image-intensities [0.005,0.995] \
     --interpolation Linear \
     --random-seed 1 \
-    --write-interval-volumes 1 \
     --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Warped.nii.gz,${OUTPUT_DIR}/InverseWarped.nii.gz] \
     --transform SyN[ 0.1,3,0 ] \
     --metric CC[${FIXED_IMG},${INPUT_IMG},1,4] \

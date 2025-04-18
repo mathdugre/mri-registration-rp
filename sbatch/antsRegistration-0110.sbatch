@@ -9,9 +9,10 @@ set -e
 
 module load apptainer
 
-SUBJECT_ID=$(sed -n ${SLURM_ARRAY_TASK_ID}p < subject_ids.txt)
-INPUT_IMG=${DATA_DIR}/derivatives/mri-registration-rp/antsBrainExtraction/sub-${SUBJECT_ID}/BrainExtractionBrain.nii.gz
-OUTPUT_DIR=${DATA_DIR}/derivatives/mri-registration-rp/0110/${EXPERIMENT_NAME}/sub-${SUBJECT_ID}
+export SUBJECT_ID=$(sed -n ${SLURM_ARRAY_TASK_ID}p < subject_ids.txt)
+export INPUT_IMG=${DATA_DIR}/derivatives/mri-registration-rp/antsBrainExtraction/sub-${SUBJECT_ID}/BrainExtractionBrain.nii.gz
+export OUTPUT_DIR=${DATA_DIR}/derivatives/mri-registration-rp/0110/${EXPERIMENT_NAME}/sub-${SUBJECT_ID}
+mkdir -p ${OUTPUT_DIR}
 
 OUTPUT_FILE=${OUTPUT_DIR}/Warped.nii.gz
 if [ -e ${OUTPUT_FILE} ]; then
@@ -21,7 +22,7 @@ if [ -e ${OUTPUT_FILE} ]; then
 fi
 
 # Use SLURM environment variables to set the number of threads
-APPTAINERENV_ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${SLURM_CPUS_PER_TASK}
+export APPTAINERENV_ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${SLURM_CPUS_PER_TASK}
 VFC_BACKENDS=${APPTAINERENV_VFC_BACKENDS}
 
 echo "
@@ -44,95 +45,13 @@ TEMPLATEFLOW_DIR: $TEMPLATEFLOW_DIR
 ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS: $APPTAINERENV_ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS
 ##########################
 "
-# Initial alignment
-mkdir -p ${OUTPUT_DIR}
-# export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
+
 export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
-apptainer exec --cleanenv \
-    -B ${DATA_DIR}:${DATA_DIR} \
-    -B ${OUTPUT_DIR}:${OUTPUT_DIR} \
-    -B ${TEMPLATEFLOW_DIR}:/templateflow \
-    ${SIF_IMG} antsRegistration \
-    --verbose 1 \
-    --dimensionality 3 \
-    --collapse-output-transforms 0 \
-    --use-histogram-matching 0 \
-    --winsorize-image-intensities [0.005,0.995] \
-    --interpolation Linear \
-    --random-seed 1 \
-    --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Aligned.nii.gz] \
-    --initial-moving-transform [${FIXED_IMG},${INPUT_IMG},1] \
-    --transform Rigid[0.1] \
-    --metric MI[${FIXED_IMG},${INPUT_IMG},1,32,Regular,0.25] \
-    --convergence [0,1e-6,10] \
-    --shrink-factors 1 \
-    --smoothing-sigmas 0vox
+sh ./sbatch/ants-initial-align.sh
 
-# Rigid
 export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
-# export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
-INPUT_IMG=${OUTPUT_DIR}/Aligned.nii.gz
-apptainer exec --cleanenv \
-    -B ${DATA_DIR}:${DATA_DIR} \
-    -B ${OUTPUT_DIR}:${OUTPUT_DIR} \
-    -B ${TEMPLATEFLOW_DIR}:/templateflow \
-    ${SIF_IMG} antsRegistration \
-    --verbose 1 \
-    --dimensionality 3 \
-    --collapse-output-transforms 0 \
-    --use-histogram-matching 0 \
-    --winsorize-image-intensities [0.005,0.995] \
-    --interpolation Linear \
-    --random-seed 1 \
-    --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Rigid.nii.gz] \
-    --transform Rigid[0.1] \
-    --metric MI[${FIXED_IMG},${INPUT_IMG},1,32,Regular,0.25] \
-    --convergence [1000x500x250x100,1e-6,10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox
+sh ./sbatch/ants-rigid.sh
+sh ./sbatch/ants-affine.sh
 
-# Affine
-export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
-# export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
-INPUT_IMG=${OUTPUT_DIR}/Rigid.nii.gz
-apptainer exec --cleanenv \
-    -B ${DATA_DIR}:${DATA_DIR} \
-    -B ${OUTPUT_DIR}:${OUTPUT_DIR} \
-    -B ${TEMPLATEFLOW_DIR}:/templateflow \
-    ${SIF_IMG} antsRegistration \
-    --verbose 1 \
-    --dimensionality 3 \
-    --collapse-output-transforms 0 \
-    --use-histogram-matching 0 \
-    --winsorize-image-intensities [0.005,0.995] \
-    --interpolation Linear \
-    --random-seed 1 \
-    --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Affine.nii.gz] \
-    --transform Affine[0.1] \
-    --metric MI[${FIXED_IMG},${INPUT_IMG},1,32,Regular,0.25] \
-    --convergence [1000x500x250x100,1e-6,10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox
-
-# Syn
-# export APPTAINERENV_VFC_BACKENDS=$VFC_BACKENDS
 export APPTAINERENV_VFC_BACKENDS="libinterflop_ieee.so"
-INPUT_IMG=${OUTPUT_DIR}/Affine.nii.gz
-apptainer exec --cleanenv \
-    -B ${DATA_DIR}:${DATA_DIR} \
-    -B ${OUTPUT_DIR}:${OUTPUT_DIR} \
-    -B ${TEMPLATEFLOW_DIR}:/templateflow \
-    ${SIF_IMG} antsRegistration \
-    --verbose 1 \
-    --dimensionality 3 \
-    --collapse-output-transforms 0 \
-    --use-histogram-matching 0 \
-    --winsorize-image-intensities [0.005,0.995] \
-    --interpolation Linear \
-    --random-seed 1 \
-    --output [${OUTPUT_DIR}/,${OUTPUT_DIR}/Warped.nii.gz,${OUTPUT_DIR}/InverseWarped.nii.gz] \
-    --transform SyN[ 0.1,3,0 ] \
-    --metric CC[${FIXED_IMG},${INPUT_IMG},1,4] \
-    --convergence [100x70x50x20,1e-6,10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox
+sh ./sbatch/ants-syn.sh

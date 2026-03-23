@@ -52,17 +52,14 @@
 	arbitrary precision arithmetic, and develop a model to predict the minimal
 	precision required for convergence per iteration of the optimization
 	process. Our results suggest that using low precision (FP32 \& FP24) is
-	sufficient in ANTs registration. Our model tends to underestimate the number
-	of precision bits required by 11.6\%, on average \TG{transition with
-	previous sentence is missing} (threshold: $10^{-3}$ \TG{remove mention of
-	threshold in abstract, it's almost impossible to understand what it means}).
-	Our work advances the understanding of mixed precision in ANTs registration,
-	by characterizing when the method \TG{``the method'' is ambiguous} is
-	beneficial. Therefore, laying the ground for practical acceleration of the
-	pipeline \TG{This sentence isn't grammatically correct}. Furthermore, our
-	theoretical model offers a simple approach to optimizing the precision in
-	ANTs registration, offering a building block for more accurate predictions
-	\TG{why to more accurate predictions? This is quite ambiguous}.
+	sufficient in ANTs registration. However, while our model can predict
+	precision requirements, it tends to underestimate the number of precision bits
+	required by 11.6\%, on average.
+	Our work advances the understanding of mixed precision in ANTs registration
+	by characterizing when mixed precision is beneficial, thus laying the
+	groundwork for practical acceleration of the pipeline. Furthermore, our
+	theoretical model offers a simple approach to dynamically optimizing the
+	precision in ANTs registration.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -73,26 +70,23 @@
 \label{sec:introduction}
 Image registration transforms a pair or collection of images to a common space,
 enabling comparison between those images. It is a critical step in magnetic
-resonance imaging (MRI) processing pipelines as it enable the comparison of
+resonance imaging (MRI) processing pipelines as it enables the comparison of
 images acquired at different times, from different subjects, or from different
-modalities. Therefore, allowing for longitudinal studies, group analysis, or
-multi-modal imaging \TG{this sentence isn't grammatically correct}. By
-consequence \TG{Frenchicism?}, registration is an important step in toolkits such as the Advanced
+modalities. This alignment enables longitudinal studies, group analysis, or multi-modal imaging.
+Consequently, registration is an important step in toolkits such as the Advanced
 Normalization Tools (ANTs) registration framework~\cite{Avants2020-xx}---a
 widely adopted tool in the neuroimaging community.
 
 MRI registration incurs a significant computational cost, often accounting for a majority of the runtime for MRI processing pipelines. As a result, optimizing registration performance is crucial for improving the overall efficiency of MRI processing---enabling studies with larger cohorts and clinical applications requiring processing in timely manner. Our previous study~\cite{Dugre2025-fs} identified two primary performance bottlenecks in MRI processing pipelines: (1) interpolation computation in the registration process and (2) memory bandwidth limitations.
 
 Mixed precision arithmetic leverages a mix of high- and low-precision data
-formats to accelerate applications while maintaining acceptable accuracy. Data
-formats with smaller bit width have faster arithmetic operations \TG{Data
-formats don't "have" operations} and reduce the memory footprint. Therefore, it
-\TG{ambiguous pronoun reference: it refers to mixed precision while the writing
-flow suggests it refers to data formats} has the potential to alleviate both
-bottlenecks. However, while mixed precision has the potential for significant
+formats to accelerate applications while maintaining acceptable accuracy. Data 
+formats with smaller bit widths allow for faster computation and
+reduced memory footprint. Therefore, mixed precision has the potential to
+alleviate both bottlenecks. However, while mixed precision has the potential for significant
 performance gains, it is unclear when and where it can be applied in complex
 scientific pipelines like medical image registration without compromising result
-integrity \TG{integrity refers to something else, use accuracy instead}.
+accuracy.
 
 While mixed precision has the potential for significant performance gains, determining the appropriate precision either spatially, temporally, or both, is challenging in complex or large-scale applications. We conduct a detailed analysis of mixed precision formats in the context of ANTs registration pipeline~\cite{Avants2020-xx}. This work contributes to the understanding and application of mixed precision formats in MRI registration by doing the following:
 \begin{itemize}
@@ -150,20 +144,10 @@ during MRI acquisitions. Furthermore, the choice of similarity metric influences
 stability; Mutual Information (MI) typically exhibits higher sensitivity to
 numerical noise than Cross-Correlation (CC). These findings underscore that
 numerical stability in registration is not merely a matter of metric convergence
-but also of anatomical integrity \TG{not sure what anatomical integrity means. I
-would rather underscore that numerical stability is data dependent, anatomy
-being only one aspect of the data}. Misalignments or topological distortions
+but is also highly data-dependent. Misalignments or topological distortions
 introduced by numerical inaccuracies can lead to erroneous clinical
 interpretations. Therefore, balancing accuracy and performance in MRI
 registration is critical to ensure reliable outcomes.
-
-Accuracy thresholds in this context are highly application-specific and remain
-poorly defined. Determining these thresholds would require extensive empirical
-validation across diverse clinical applications. While establishing these limits
-is critical to fully realizing the potential of mixed precision, it remains a
-significant challenge in the field and is outside the primary scope of this
-work. \TG{I find this paragraph misplaced and ambiguous. I would rather just
-omit it, or move it to results.}
 
 \section{Theoretical Analysis}
 \label{sec:theory}
@@ -182,32 +166,34 @@ Under the assumptions that $\mathcal{L}$ is convex and $\nabla \mathcal{L}$ is L
 \begin{equation}
 	\|\nabla \mathcal{L}(x) - \nabla \mathcal{L}(y)\| \leq K \|x - y\| \quad \forall x, y,
 \end{equation}
-the optimization is guaranteed to progress toward the minimum only as \TG{``only
-as'' is ambiguous, do you mean "if and only if"?} long as the gradient signal
-$\|\nabla \mathcal{L}(\theta)\|$ exceeds the rounding noise. The theorem shows
-that if the model \TG{which model? Do you mean ``the optimization''} does not
-converge to the minimum, then it will reach a critical zone \TG{``the model''
-doesn't reach a zone. Do you mean that the optimal value theta star will?}
-bounding the loss gradient norm as follows:
+the optimization is guaranteed to progress toward the minimum if
+the gradient signal $\|\nabla \mathcal{L}(\theta)\|$ exceeds the rounding noise.
+The theorem shows that if the optimization does not converge to the minimum,
+then it will reach a critical region \TG{``the model''
+	doesn't reach a czone. Do you mean that the optimal value theta star will?} bounding the loss gradient
+norm as follows:
 \begin{equation}
 	\|\nabla \mathcal{L}(\theta)\| \leq \frac{4+3\sqrt{2}}{2^{p}} K \|\theta\|.
 \end{equation}
 The constant $4+3\sqrt{2}$ is a symbolic bound derived from the quadratic
 inequality required to guarantee $\mathcal{L}(\theta_{t+1}) <
-\mathcal{L}(\theta_t)$. By taking the contrapositive, we establish a sufficient
-condition for convergence. To ensure the gradient signal is not masked by
-precision-induced noise, the precision $p$ must satisfy \TG{I think the logic is
-wrong here, it should be ``if the bound is verified then the optimization will
-converge''. But if the bound is not verified then the optimization may also
-converge, which you should note.}:
+	\mathcal{L}(\theta_t)$. By taking the contrapositive, we establish a sufficient,
+but not necessary, condition for convergence. If the gradient signal is not
+masked by precision-induced noise, the optimization will converge. Thus, it is
+sufficient that the precision $p$ satisfies\TG{I think the logic is
+	wrong here, it should be ``if the bound is verified then the optimization will
+	converge''. But if the bound is not verified then the optimization may also
+	converge, which you should note.}\MD{Modified the text to clarify the meeting
+	the bound is sufficient but not necessary for convergence.}:
 \begin{equation}
 	p > p_{min} = \log_2 \left( \frac{(4+3\sqrt{2}) K \|\theta\|}{\|\nabla\mathcal{L}(\theta)\|} \right)
 	\label{eq:pmin}
 \end{equation}
 where $p_{min}$ is the minimum number of mantissa bits required at a given
 iteration. We modified ITK, the optimization library used by ANTs, to probe $K$,
-$\|\nabla \mathcal{L}\|$, and $\|\theta\|$ at each iteration. As in the original
-study \TG{not sure what the original study is, be more explicit}, $K$ was estimated using a first-order finite difference:
+$\|\nabla \mathcal{L}\|$, and $\|\theta\|$ at each iteration. As in the study
+by Hayford et al.~\cite{Hayford2024-kb}, $K$ was estimated using a first-order
+finite difference:
 \begin{equation}
 	K \approx \frac{\|\nabla \mathcal{L}(\theta_{t+1}) - \nabla \mathcal{L}(\theta_t)\|}{\|\theta_{t+1} - \theta_t\|}
 \end{equation}
@@ -267,7 +253,8 @@ quality-controlled against the \textit{tpl-MNI152NLin2009cAsym}
 template~\cite{Ciric2022-mb}. Experiments were executed on the \textit{Rorqual}
 cluster of the Digital Research Alliance of Canada using containerized Apptainer
 images with architecture-specific instructions disabled to ensure
-reproducibility across CPU microarchitectures. \TG{you could link to your github repo here}
+reproducibility across CPU microarchitectures. The code used for these
+experiments is available online at: \url{https://github.com/mathdugre/mri-registration-rp}
 
 \section{Results}
 \label{sec:results}
@@ -332,10 +319,10 @@ baseline, despite the low-precision initialization.
 This ``accuracy recovery'' suggests that the numerical errors introduced in
 early stages are not additive; instead, the final registration accuracy is
 governed by the precision of the SyN stage rather than the cumulative error
-propagated from preceding steps.
-
-\TG{conclude on the possibility to use BF16 alltogether, if only the output of
-the SyN stage is to be used}
+propagated from preceding steps. Consequently, low-precision formats such as
+BF16 could potentially be used for the entire pipeline if only the final
+ transformation from the SyN stage is required, rather than
+intermediate aligned volumes.
 
 % Exception for the initialization step
 \definecolor{RedHL}{RGB}{253, 104, 100}
@@ -402,7 +389,7 @@ The theoretical model adapted from Hayford et al.~\cite{Hayford2024-kb} assumes 
 
 Prior work in deep learning suggest that non-convexity may not invalidate convergence. Gur-Ari et al.~\cite{Gur-Ari2018-pm} demonstrated that stochastic gradient descent confines optimization to a low-dimensional subspace spanned by the top Hessian eigenvectors, which can exhibit locally convex properties, despite a globally non-convex loss landscape. Additionally, Liu et al.~\cite{Liu2020-pe} showed that over-parametrized neural networks often satisfy the Polyak-Lojasiewicz~\cite{Lojasiewicz1963-xd,Polyak1963-nd} condition, enabling convergence to a global minimum despite non-convex landscapes despite non-convex loss landscape.
 
-The ANTs registration problem differs from deep learning optimization in a critical way: transformation parameters directly affect anatomical integrity \TG{not sure what this means, rephrase} by modifying spatial voxel mappings, making over-parametrization arguments inapplicable. However, several factors may create a locally convex optimization subspace: the multi-resolution pyramid progressively refines the search space, Gaussian smoothing regularizes the loss landscape, and explicit regularization constraints further stabilize optimization. Future work should characterize the ANTs loss landscape to validate these theoretical assumptions.
+The ANTs registration problem differs from deep learning optimization in a critical way: in classical registration, transformation parameters (e.g., affine matrices or dense vector fields) directly warp the voxels in space, establishing a direct one-to-one or one-to-many spatial mapping. In contrast, the parameters in deep learning models are highly abstracted and lack this direct mapping to individual voxels. Because classical parameters directly impact the spatial structure of the data, deep learning over-parametrization arguments are inapplicable here. However, several factors may create a locally convex optimization subspace: the multi-resolution pyramid progressively refines the search space, Gaussian smoothing regularizes the loss landscape, and explicit regularization constraints further stabilize optimization. Future work should characterize the ANTs loss landscape to validate these theoretical assumptions.
 
 Our model attempts to capture complex optimization dynamics via heuristic. Its predictions are conservative, underestimating the bit requirements by only 6--17\% across difference thresholds and tends to over-predict by 26--50\%. Over-prediction preserves the convergence guarantee but limits the potential speedup from lower-bit formats, while under-prediction risks convergence issues. Balancing these factors is essential for maximizing performance without compromising numerical stability.
 
@@ -412,11 +399,9 @@ Our current experiments incur a large computational cost by simulating each rang
 However, fine-grained mixed precision presents two primary technical challenges. First, frequent precision casting can cause overhead that outscales the arithmetic benefits. Second, implementing such tuning is difficult in large, legacy codebases like ITK. In our methods the similarity metric calculation is computed in FP64 to preserve stability. In practice, this would create a large casting overhead at each iteration and be challenging to implement spatial mixed precision in ITK. Future research must align the similarity metric's precision with the optimization pipeline to simplify configuration and eliminate casting bottlenecks.
 
 \subsection{Limitations and Clinical Relevance}
-\TG{I would avoid using the word ``clinical'' here, clinical validation would involve a whole other range of data and metrics}
-
 While our model effectively predicts the minimum precision requirement, several components limit its generalizability and require further research. First, our current model makes precision predictions based on the FP64 loss landscape. Dynamically adjusting the computational precision based on these predictions would modify the loss landscape, potentially affecting the accuracy of subsequent predictions. Second, we utilized the $L_2$ norm consistently with Hayford et al.~\cite{Hayford2024-kb}, which does not account for the varying units and scales of affine transformation parameters. Future studies should investigate scale-invariant norms, such as the Mahalanobis norm. Third, since previous work demonstrated that similarity metrics significantly influence numerical stability~\cite{Mirhakimi2025-qb}, the interaction between other metric types and mixed precision requires deeper investigation.
 
-Finally, the accuracy thresholds in this study were strictly defined via relative numerical differences from the FP64 baseline. These pure mathematical thresholds lack direct clinical interpretation. To confidently transition mixed precision registration into clinical deployment, future work must evaluate the impact of minor registration differences on concrete downstream tasks. This involves ensuring reliability in clinical applications such as volume estimation in voxel-based morphometry, longitudinal tracking of lesions, or high-stakes surgical planning, where the margin for topological distortion is critical.
+Finally, the accuracy thresholds in this study were strictly defined via relative numerical differences from the FP64 baseline. These pure mathematical thresholds lack direct clinical interpretation. To confidently transition mixed precision registration into clinical deployment, future work must evaluate the impact of minor registration differences on concrete downstream tasks.
 
 \section{Conclusion}
 \label{sec:conclusion}

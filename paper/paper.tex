@@ -52,13 +52,13 @@
 	arbitrary precision arithmetic, and develop a model to predict the minimal
 	precision required for convergence per iteration of the optimization
 	process. Our results suggest that using low precision (FP32 \& FP24) is
-	sufficient in ANTs registration. However, while our model can predict
-	precision requirements, it tends to underestimate the number of precision bits
+	sufficient in ANTs registration. \HL{However, while our model can predict
+	precision requirements, it} tends to underestimate the number of precision bits
 	required by 11.6\%, on average.
 	Our work advances the understanding of mixed precision in ANTs registration
-	by characterizing when mixed precision is beneficial, thus laying the
-	groundwork for practical acceleration of the pipeline. Furthermore, our
-	theoretical model offers a simple approach to dynamically optimizing the
+	by characterizing when \HL{mixed precision} is beneficial, \HL{thus laying the
+	groundwork} for practical acceleration of the pipeline. Furthermore, our
+	theoretical model offers a simple approach to \HL{dynamically} optimizing the
 	precision in ANTs registration.
 \end{abstract}
 
@@ -70,10 +70,10 @@
 \label{sec:introduction}
 Image registration transforms a pair or collection of images to a common space,
 enabling comparison between those images. It is a critical step in magnetic
-resonance imaging (MRI) processing pipelines as it enables the comparison of
+resonance imaging (MRI) processing pipelines as it \HL{enables} the comparison of
 images acquired at different times, from different subjects, or from different
-modalities. This alignment enables longitudinal studies, group analysis, or multi-modal imaging.
-Consequently, registration is an important step in toolkits such as the Advanced
+modalities. \HL{This alignment enables} longitudinal studies, group analysis, or multi-modal imaging.
+\HL{Consequently,} registration is an important step in toolkits such as the Advanced
 Normalization Tools (ANTs) registration framework~\cite{Avants2020-xx}---a
 widely adopted tool in the neuroimaging community.
 
@@ -81,12 +81,12 @@ MRI registration incurs a significant computational cost, often accounting for a
 
 Mixed precision arithmetic leverages a mix of high- and low-precision data
 formats to accelerate applications while maintaining acceptable accuracy. Data 
-formats with smaller bit widths allow for faster computation and
-reduced memory footprint. Therefore, mixed precision has the potential to
+formats with smaller bit \HL{widths allow for faster computation} and
+reduced memory footprint. Therefore, \HL{mixed precision} has the potential to
 alleviate both bottlenecks. However, while mixed precision has the potential for significant
 performance gains, it is unclear when and where it can be applied in complex
 scientific pipelines like medical image registration without compromising result
-accuracy.
+\HL{accuracy}.
 
 While mixed precision has the potential for significant performance gains, determining the appropriate precision either spatially, temporally, or both, is challenging in complex or large-scale applications. We conduct a detailed analysis of mixed precision formats in the context of ANTs registration pipeline~\cite{Avants2020-xx}. This work contributes to the understanding and application of mixed precision formats in MRI registration by doing the following:
 \begin{itemize}
@@ -144,7 +144,7 @@ during MRI acquisitions. Furthermore, the choice of similarity metric influences
 stability; Mutual Information (MI) typically exhibits higher sensitivity to
 numerical noise than Cross-Correlation (CC). These findings underscore that
 numerical stability in registration is not merely a matter of metric convergence
-but is also highly data-dependent. Misalignments or topological distortions
+but \HL{is also highly data-dependent}. Misalignments or topological distortions
 introduced by numerical inaccuracies can lead to erroneous clinical
 interpretations. Therefore, balancing accuracy and performance in MRI
 registration is critical to ensure reliable outcomes.
@@ -166,10 +166,10 @@ Under the assumptions that $\mathcal{L}$ is convex and $\nabla \mathcal{L}$ is L
 \begin{equation}
 	\|\nabla \mathcal{L}(x) - \nabla \mathcal{L}(y)\| \leq K \|x - y\| \quad \forall x, y,
 \end{equation}
-the optimization is guaranteed to progress toward the minimum if
+the optimization is guaranteed to progress toward the minimum \HL{if}
 the gradient signal $\|\nabla \mathcal{L}(\theta)\|$ exceeds the rounding noise.
-The theorem shows that if the optimization does not converge to the minimum,
-then it will reach a critical region \TG{``the model''
+The theorem shows that if the \HL{optimization} does not converge to the minimum,
+then it will reach a critical \HL{region} \TG{``the model''
 	doesn't reach a czone. Do you mean that the optimal value theta star will?} bounding the loss gradient
 norm as follows:
 \begin{equation}
@@ -177,10 +177,10 @@ norm as follows:
 \end{equation}
 The constant $4+3\sqrt{2}$ is a symbolic bound derived from the quadratic
 inequality required to guarantee $\mathcal{L}(\theta_{t+1}) <
-	\mathcal{L}(\theta_t)$. By taking the contrapositive, we establish a sufficient,
-but not necessary, condition for convergence. If the gradient signal is not
-masked by precision-induced noise, the optimization will converge. Thus, it is
-sufficient that the precision $p$ satisfies\TG{I think the logic is
+	\mathcal{L}(\theta_t)$. By taking the contrapositive, we establish a sufficient\HL{,}
+\HL{but not necessary,} condition for convergence. \HL{If} the gradient signal is not
+masked by precision-induced noise, \HL{the optimization will converge. Thus, it is
+sufficient that} the precision $p$ satisfies\TG{I think the logic is
 	wrong here, it should be ``if the bound is verified then the optimization will
 	converge''. But if the bound is not verified then the optimization may also
 	converge, which you should note.}\MD{Modified the text to clarify the meeting
@@ -191,8 +191,8 @@ sufficient that the precision $p$ satisfies\TG{I think the logic is
 \end{equation}
 where $p_{min}$ is the minimum number of mantissa bits required at a given
 iteration. We modified ITK, the optimization library used by ANTs, to probe $K$,
-$\|\nabla \mathcal{L}\|$, and $\|\theta\|$ at each iteration. As in the study
-by Hayford et al.~\cite{Hayford2024-kb}, $K$ was estimated using a first-order
+$\|\nabla \mathcal{L}\|$, and $\|\theta\|$ at each iteration. As in the \HL{study
+by Hayford et al.~\cite{Hayford2024-kb}}, $K$ was estimated using a first-order
 finite difference:
 \begin{equation}
 	K \approx \frac{\|\nabla \mathcal{L}(\theta_{t+1}) - \nabla \mathcal{L}(\theta_t)\|}{\|\theta_{t+1} - \theta_t\|}
@@ -253,8 +253,8 @@ quality-controlled against the \textit{tpl-MNI152NLin2009cAsym}
 template~\cite{Ciric2022-mb}. Experiments were executed on the \textit{Rorqual}
 cluster of the Digital Research Alliance of Canada using containerized Apptainer
 images with architecture-specific instructions disabled to ensure
-reproducibility across CPU microarchitectures. The code used for these
-experiments is available online at: \url{https://github.com/mathdugre/mri-registration-rp}
+reproducibility across CPU microarchitectures. \HL{The code used for these
+experiments is available online at:} \url{https://github.com/mathdugre/mri-registration-rp}
 
 \section{Results}
 \label{sec:results}
@@ -319,10 +319,10 @@ baseline, despite the low-precision initialization.
 This ``accuracy recovery'' suggests that the numerical errors introduced in
 early stages are not additive; instead, the final registration accuracy is
 governed by the precision of the SyN stage rather than the cumulative error
-propagated from preceding steps. Consequently, low-precision formats such as
+propagated from preceding steps. \HL{Consequently, low-precision formats such as
 BF16 could potentially be used for the entire pipeline if only the final
  transformation from the SyN stage is required, rather than
-intermediate aligned volumes.
+intermediate aligned volumes.}
 
 % Exception for the initialization step
 \definecolor{RedHL}{RGB}{253, 104, 100}
@@ -389,7 +389,7 @@ The theoretical model adapted from Hayford et al.~\cite{Hayford2024-kb} assumes 
 
 Prior work in deep learning suggest that non-convexity may not invalidate convergence. Gur-Ari et al.~\cite{Gur-Ari2018-pm} demonstrated that stochastic gradient descent confines optimization to a low-dimensional subspace spanned by the top Hessian eigenvectors, which can exhibit locally convex properties, despite a globally non-convex loss landscape. Additionally, Liu et al.~\cite{Liu2020-pe} showed that over-parametrized neural networks often satisfy the Polyak-Lojasiewicz~\cite{Lojasiewicz1963-xd,Polyak1963-nd} condition, enabling convergence to a global minimum despite non-convex landscapes despite non-convex loss landscape.
 
-The ANTs registration problem differs from deep learning optimization in a critical way: in classical registration, transformation parameters (e.g., affine matrices or dense vector fields) directly warp the voxels in space, establishing a direct one-to-one or one-to-many spatial mapping. In contrast, the parameters in deep learning models are highly abstracted and lack this direct mapping to individual voxels. Because classical parameters directly impact the spatial structure of the data, deep learning over-parametrization arguments are inapplicable here. However, several factors may create a locally convex optimization subspace: the multi-resolution pyramid progressively refines the search space, Gaussian smoothing regularizes the loss landscape, and explicit regularization constraints further stabilize optimization. Future work should characterize the ANTs loss landscape to validate these theoretical assumptions.
+The ANTs registration problem differs from deep learning optimization in a critical way: \HL{in classical registration, transformation parameters (e.g., affine matrices or dense vector fields) directly warp the voxels in space, establishing a direct one-to-one or one-to-many spatial mapping. In contrast, the parameters in deep learning models are highly abstracted and lack this direct mapping to individual voxels. Because classical parameters directly impact the spatial structure of the data, deep learning over-parametrization arguments are inapplicable here}. However, several factors may create a locally convex optimization subspace: the multi-resolution pyramid progressively refines the search space, Gaussian smoothing regularizes the loss landscape, and explicit regularization constraints further stabilize optimization. Future work should characterize the ANTs loss landscape to validate these theoretical assumptions.
 
 Our model attempts to capture complex optimization dynamics via heuristic. Its predictions are conservative, underestimating the bit requirements by only 6--17\% across difference thresholds and tends to over-predict by 26--50\%. Over-prediction preserves the convergence guarantee but limits the potential speedup from lower-bit formats, while under-prediction risks convergence issues. Balancing these factors is essential for maximizing performance without compromising numerical stability.
 

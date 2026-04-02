@@ -41,7 +41,7 @@
 
 \begin{abstract}
 	Image registration is key to MRI analysis, allowing comparison between two
-	or more images. Its high compute cost limits analysis of larger cohorts and
+	or more images. Its high compute cost limits analysis of large population cohorts and
 	time sensitive applications. Mixed precision is a technique leveraging high-
 	and low-precision arithmetic to accelerate computations while maintaining
 	accuracy. Its success in accelerating deep learning models led to a broad
@@ -54,7 +54,7 @@
 	process. Our results suggest that using low precision (FP32 \& FP24) is
 	sufficient in ANTs registration. \HL{However, while our model can predict
 	precision requirements, it} tends to underestimate the number of precision bits
-	required by 11.6\%, on average.
+	required by 11.6\%, on average \TG{I don't understand this statement, it looks contradictory}.
 	Our work advances the understanding of mixed precision in ANTs registration
 	by characterizing when \HL{mixed precision} is beneficial, \HL{thus laying the
 	groundwork} for practical acceleration of the pipeline. Furthermore, our
@@ -77,7 +77,14 @@ modalities. \HL{This alignment enables} longitudinal studies, group analysis, or
 Normalization Tools (ANTs) registration framework~\cite{Avants2020-xx}---a
 widely adopted tool in the neuroimaging community.
 
-MRI registration incurs a significant computational cost, often accounting for a majority of the runtime for MRI processing pipelines. As a result, optimizing registration performance is crucial for improving the overall efficiency of MRI processing---enabling studies with larger cohorts and clinical applications requiring processing in timely manner. Our previous study~\cite{Dugre2025-fs} identified two primary performance bottlenecks in MRI processing pipelines: (1) interpolation computation in the registration process and (2) memory bandwidth limitations.
+MRI registration incurs a significant computational cost, often accounting for a
+majority of the runtime for MRI processing pipelines. As a result, optimizing
+registration performance is crucial for improving the overall efficiency of MRI
+processing---enabling studies with large population cohorts and clinical applications
+requiring processing in timely manner. Our previous study~\cite{Dugre2025-fs}
+identified two primary performance bottlenecks in MRI processing pipelines: (1)
+interpolation computation in the registration process and (2) memory bandwidth
+limitations.
 
 Mixed precision arithmetic leverages a mix of high- and low-precision data
 formats to accelerate applications while maintaining acceptable accuracy. Data 
@@ -180,11 +187,7 @@ inequality required to guarantee $\mathcal{L}(\theta_{t+1}) <
 	\mathcal{L}(\theta_t)$. By taking the contrapositive, we establish a sufficient\HL{,}
 \HL{but not necessary,} condition for convergence. \HL{If} the gradient signal is not
 masked by precision-induced noise, \HL{the optimization will converge. Thus, it is
-sufficient that} the precision $p$ satisfies\TG{I think the logic is
-	wrong here, it should be ``if the bound is verified then the optimization will
-	converge''. But if the bound is not verified then the optimization may also
-	converge, which you should note.}\MD{Modified the text to clarify the meeting
-	the bound is sufficient but not necessary for convergence.}:
+sufficient that} the precision $p$ satisfies:
 \begin{equation}
 	p > p_{min} = \log_2 \left( \frac{(4+3\sqrt{2}) K \|\theta\|}{\|\nabla\mathcal{L}(\theta)\|} \right)
 	\label{eq:pmin}
@@ -192,7 +195,7 @@ sufficient that} the precision $p$ satisfies\TG{I think the logic is
 where $p_{min}$ is the minimum number of mantissa bits required at a given
 iteration. We modified ITK, the optimization library used by ANTs, to probe $K$,
 $\|\nabla \mathcal{L}\|$, and $\|\theta\|$ at each iteration. As in the \HL{study
-by Hayford et al.~\cite{Hayford2024-kb}}, $K$ was estimated using a first-order
+by Hayford et al.}~\cite{Hayford2024-kb}, $K$ was estimated using a first-order
 finite difference:
 \begin{equation}
 	K \approx \frac{\|\nabla \mathcal{L}(\theta_{t+1}) - \nabla \mathcal{L}(\theta_t)\|}{\|\theta_{t+1} - \theta_t\|}
@@ -322,7 +325,7 @@ governed by the precision of the SyN stage rather than the cumulative error
 propagated from preceding steps. \HL{Consequently, low-precision formats such as
 BF16 could potentially be used for the entire pipeline if only the final
  transformation from the SyN stage is required, rather than
-intermediate aligned volumes.}
+intermediate aligned volumes.} \TG{This is an important result and should be mentioned in the abstract}
 
 % Exception for the initialization step
 \definecolor{RedHL}{RGB}{253, 104, 100}

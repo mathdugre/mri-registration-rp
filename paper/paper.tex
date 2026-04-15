@@ -52,12 +52,11 @@
 	arbitrary precision arithmetic, and develop a model to predict the minimal
 	precision required for convergence per iteration of the optimization
 	process. Our results suggest that using low precision (FP32 \& FP24) is
-	sufficient in ANTs registration. \HL{However, while our model can predict
-	precision requirements, it} tends to underestimate the number of precision bits
-	required by 11.6\%, on average \TG{I don't understand this statement, it looks contradictory}.
+	sufficient in ANTs registration. Low-precision formats such as BF16 can even be used in early stages without loss of accuracy, provided that the final stage maintains sufficient precision (e.g., FP24). 
+	\HL{Furthermore, we demonstrate that our model accurately predicts precision requirements in practice, even when the theoretical assumptions for guaranteed convergence are not strictly met.}
 	Our work advances the understanding of mixed precision in ANTs registration
 	by characterizing when \HL{mixed precision} is beneficial, \HL{thus laying the
-	groundwork} for practical acceleration of the pipeline. Furthermore, our
+		groundwork} for practical acceleration of the pipeline. Furthermore, our
 	theoretical model offers a simple approach to \HL{dynamically} optimizing the
 	precision in ANTs registration.
 \end{abstract}
@@ -187,7 +186,7 @@ inequality required to guarantee $\mathcal{L}(\theta_{t+1}) <
 	\mathcal{L}(\theta_t)$. By taking the contrapositive, we establish a sufficient\HL{,}
 \HL{but not necessary,} condition for convergence. \HL{If} the gradient signal is not
 masked by precision-induced noise, \HL{the optimization will converge. Thus, it is
-sufficient that} the precision $p$ satisfies:
+	sufficient that} the precision $p$ satisfies:
 \begin{equation}
 	p > p_{min} = \log_2 \left( \frac{(4+3\sqrt{2}) K \|\theta\|}{\|\nabla\mathcal{L}(\theta)\|} \right)
 	\label{eq:pmin}
@@ -195,7 +194,7 @@ sufficient that} the precision $p$ satisfies:
 where $p_{min}$ is the minimum number of mantissa bits required at a given
 iteration. We modified ITK, the optimization library used by ANTs, to probe $K$,
 $\|\nabla \mathcal{L}\|$, and $\|\theta\|$ at each iteration. As in the \HL{study
-by Hayford et al.}~\cite{Hayford2024-kb}, $K$ was estimated using a first-order
+	by Hayford et al.}~\cite{Hayford2024-kb}, $K$ was estimated using a first-order
 finite difference:
 \begin{equation}
 	K \approx \frac{\|\nabla \mathcal{L}(\theta_{t+1}) - \nabla \mathcal{L}(\theta_t)\|}{\|\theta_{t+1} - \theta_t\|}
@@ -257,7 +256,7 @@ template~\cite{Ciric2022-mb}. Experiments were executed on the \textit{Rorqual}
 cluster of the Digital Research Alliance of Canada using containerized Apptainer
 images with architecture-specific instructions disabled to ensure
 reproducibility across CPU microarchitectures. \HL{The code used for these
-experiments is available online at:} \url{https://github.com/mathdugre/mri-registration-rp}
+	experiments is available online at:} \url{https://github.com/mathdugre/mri-registration-rp}
 
 \section{Results}
 \label{sec:results}
@@ -323,9 +322,9 @@ This ``accuracy recovery'' suggests that the numerical errors introduced in
 early stages are not additive; instead, the final registration accuracy is
 governed by the precision of the SyN stage rather than the cumulative error
 propagated from preceding steps. \HL{Consequently, low-precision formats such as
-BF16 could potentially be used for the entire pipeline if only the final
- transformation from the SyN stage is required, rather than
-intermediate aligned volumes.} \TG{This is an important result and should be mentioned in the abstract}
+	BF16 could potentially be used for the entire pipeline if only the final
+	transformation from the SyN stage is required, rather than
+	intermediate aligned volumes.} \TG{This is an important result and should be mentioned in the abstract}
 
 % Exception for the initialization step
 \definecolor{RedHL}{RGB}{253, 104, 100}
@@ -343,6 +342,7 @@ intermediate aligned volumes.} \TG{This is an important result and should be men
 \end{table}
 
 \subsection{Predicted $p_{min}$ Yields Conservative Estimates for Convergence}
+\MD{TODO: Shift the tone slightly. The model is not perfect, but works well in practice, despite the assumptions not being strictly met.}
 We compared the predicted $p_{min}$ via Equation~\ref{eq:pmin} with empirical
 VPREC estimations. The empirical $p_{min}$ represents the minimum precision
 required to maintain the mean relative metric difference below specific

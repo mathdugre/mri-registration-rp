@@ -342,11 +342,10 @@ propagated from preceding steps. \HL{Consequently, low-precision formats such as
 \end{table}
 
 \subsection{Predicted $p_{min}$ Yields Conservative Estimates for Convergence}
-\MD{TODO: Shift the tone slightly. The model is not perfect, but works well in practice, despite the assumptions not being strictly met.}
 We compared the predicted $p_{min}$ via Equation~\ref{eq:pmin} with empirical
 VPREC estimations. The empirical $p_{min}$ represents the minimum precision
 required to maintain the mean relative metric difference below specific
-thresholds ($10^{-2}$ to $10^{-5}$).
+thresholds ($10^{-2}$ to $10^{-4}$).
 
 As shown in Fig.~\ref{fig:ants-pmin-overview}, the predicted $p_{min}$ (dashed
 line) generally acts as a conservative upper bound for the empirical thresholds,
@@ -377,6 +376,8 @@ Table~\ref{tab:area-ratio-summary} summarizes the percentage of the area where o
 	\caption{Summary of Prediction Accuracy via Area Ratio Analysis. Values represent the mean and standard deviation $(\mu \pm \sigma)$ of the area where the theoretical $p_{min}$ under or over estimates the empirical VPREC thresholds across all stage-level combinations. A smaller "Over" ratio signifies a lower overhead, but a tighter margin for convergence.}
 	\label{tab:area-ratio-summary}
 \end{table}
+
+Despite the model's assumptions of convexity and Lipschitz continuity not being strictly met in the ANTs registration pipeline, our model accurately predicts the $p_{min}$ in practice, albeit with some conservative bias.
 
 \section{Discussion}
 \label{sec:discussion}

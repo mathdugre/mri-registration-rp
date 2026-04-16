@@ -119,14 +119,14 @@ Section~\ref{sec:conclusion} concludes the paper.
 \subsection{Reduced and Mixed Precision Arithmetic}
 The computational complexity of arithmetic operations is approximately quadratic relative to the bit-width of the data format utilized~\cite{Wang2019-qe}. Consequently, enabling applications to utilize reduced bit-width formats offers significant performance benefits. Traditionally, pipeline developers have relied on \textit{binary64} (FP64) and \textit{binary32} (FP32) to balance resource requirements with numerical accuracy. However, many applications may not necessitate the high dynamic range or precision of these formats and could be significantly accelerated through mixed precision strategies.
 
-Mixed precision optimizes performance by leveraging a combination of high- and low-bit-width arithmetic. These variations in precision can be applied either temporally (across iterations) or spatially (across specific code sections). While mixed precision promises higher performance gains than static mixed precision methods, its implementation in complex pipelines is often technically challenging, typically requiring extensive and intrusive code modifications.
+Mixed precision optimizes performance by leveraging a combination of high- and low-bit-width arithmetic. These variations in precision can be applied either temporally (across iterations) or spatially (across specific code sections). While dynamic mixed precision promises higher performance gains than static reduced-precision methods, its implementation in complex pipelines is often technically challenging, typically requiring extensive and intrusive code modifications.
 
 \subsection{Prior Work on Mixed Precision}
 Mixed precision has been widely adopted in deep learning (DL), where the escalating parameters and computational demands of modern models have driven the adoption of lower precision formats, such as half-precision (FP16), bfloat16 (BF16), and sub-8-bit representations. This significantly reduces memory bandwidth usage while accelerating matrix multiplications. The foundation of modern mixed precision training was established by Micikevicius et al.~\cite{Micikevicius2017-sf}, who introduced critical techniques to prevent accuracy degradation when training with FP16, including maintaining an FP32 master copy of weights, loss scaling, and high-precision accumulation. PyTorch~\cite{Paszke2019-vk} and TensorFlow~\cite{Abadi2016-vm}, popular DL frameworks, provide native support for Automatic Mixed Precision (AMP) utilizing static heuristics mapping operations to predefined precisions.
 
 To further mitigate the scaling complexities inherent in standard IEEE formats, specialized hardware representations have emerged, such as Brain Floating Point (BF16)~\cite{Kalamkar2019-br} and Nvidia's TensorFloat-32 (TF32)~\cite{Kharya2020-th}, as well as 8-bit and 4-bit formats representing the frontier for large language model applications~\cite{Sevegnani2025-zd}.
 
-Despite these advancements in DL, the adoption of mixed precision in classical scientific pipelines, such as neuroimaging, remains limited. These scientific pipelines generally lack ``out-of-the-box'' support for mixed precision and often default to FP64 to ensure stability. Standard implementations of AMP fail to encapsulate diverse data distributions and optimization topologies. Alternative solutions encompass static analysis---like DAISY~\cite{Darulova2018-wv} and Herbie~\cite{Panchekha2015-au}---which guarantee error bounds offline but output overly conservative configurations and are challeging to apply to complex application. Dynamic analysis directly tracks real-time program execution to allocate precision, seen in approaches like SERP~\cite{Rios2021-it}, CoMP~\cite{Dai2025-ek}, and DQMQ~\cite{Wang2023-iu}, but these techniques lack a theoretical foundation and often incurs large computational overhead. 
+Despite these advancements in DL, the adoption of mixed precision in classical scientific pipelines, such as neuroimaging, remains limited. These scientific pipelines generally lack ``out-of-the-box'' support for mixed precision and often default to FP64 to ensure stability. Standard implementations of AMP fail to encapsulate diverse data distributions and optimization topologies. Alternative solutions encompass static analysis---like DAISY~\cite{Darulova2018-wv} and Herbie~\cite{Panchekha2015-au}---which guarantee error bounds offline but output overly conservative configurations and are challenging to apply to complex applications. Dynamic analysis directly tracks real-time program execution to allocate precision, seen in approaches like SERP~\cite{Rios2021-it}, CoMP~\cite{Dai2025-ek}, and DQMQ~\cite{Wang2023-iu}, but these techniques lack a theoretical foundation and often incurs large computational overhead. 
 
 To alleviate the heavy runtime exploration costs of dynamic tuning, theoretical bounds characterizing computation precision requirements present a promising avenue~\cite{Sakr2017-ec, Tu2023-os, Wang2024-re}. Providing a rigorously generalizable mathematical anchor, Hayford et al.~\cite{Hayford2024-kb} linked gradient-based optimization convergence directly to computational precision thresholds based on parameter norm, the Lipschitz constant, and loss gradient norm variables. This theoretical framework offers the foundation for tuning precision at runtime without the need for costly dynamic exploration, but has yet to be expanded for precision tuning or applied to complex scientific pipelines such as medical image registration.
 
@@ -176,8 +176,7 @@ Under the assumptions that $\mathcal{L}$ is convex and $\nabla \mathcal{L}$ is L
 the optimization is guaranteed to progress toward the minimum \HL{if}
 the gradient signal $\|\nabla \mathcal{L}(\theta)\|$ exceeds the rounding noise.
 The theorem shows that if the \HL{optimization} does not converge to the minimum,
-then it will reach a critical \HL{region} \TG{``the model''
-	doesn't reach a czone. Do you mean that the optimal value theta star will?} bounding the loss gradient
+then it will reach a critical \HL{region} bounding the loss gradient
 norm as follows:
 \begin{equation}
 	\|\nabla \mathcal{L}(\theta)\| \leq \frac{4+3\sqrt{2}}{2^{p}} K \|\theta\|.
@@ -201,7 +200,7 @@ finite difference:
 	K \approx \frac{\|\nabla \mathcal{L}(\theta_{t+1}) - \nabla \mathcal{L}(\theta_t)\|}{\|\theta_{t+1} - \theta_t\|}
 \end{equation}
 By computing Equation~\ref{eq:pmin} dynamically, we determine the minimum
-precision per iterations necessary to maintain the accuracy of the ANTs
+precision per iteration necessary to maintain the accuracy of the ANTs
 registration optimization.
 
 The model could be used to dynamically adjust precision at runtime in ANTs, or other gradient-based optimization (e.g., deep learning training), by instrumenting the code to compute $p_{min}$ at each iteration and adjusting the precision accordingly. However, this dynamic adjustment would require extensive code modification and is outside the scope of this work. We focus on evaluating the accuracy of the model in predicting precision requirements.
@@ -209,7 +208,7 @@ The model could be used to dynamically adjust precision at runtime in ANTs, or o
 \section{Experiments}
 \label{sec:experiments}
 \subsection{ANTs Registration SyN}
-The ANTs registration framework~\cite{Avants2020-xx} is a multi-stage, multi-resolution iterative optimization pipeline that aligns a moving image to a fixed template. The default configuration consists of three sequential stages---rigid, affine, and symmetric normalization (SyN)~\cite{Avants2008-ea}---each operating across four resolution levels. These levels use a shrink factors of $8\times4\times2\times1$ with corresponding Gaussian smoothing kernels of $3\times2\times1\times0$, respectively. Prior to optimization, the images are aligned via an initial intensity-based center-of-mass transformation.
+The ANTs registration framework~\cite{Avants2020-xx} is a multi-stage, multi-resolution iterative optimization pipeline that aligns a moving image to a fixed template. The default configuration consists of three sequential stages---rigid, affine, and symmetric normalization (SyN)~\cite{Avants2008-ea}---each operating across four resolution levels. These levels use shrink factors of $8\times4\times2\times1$ with corresponding Gaussian smoothing kernels of $3\times2\times1\times0$, respectively. Prior to optimization, the images are aligned via an initial intensity-based center-of-mass transformation.
 
 By default, the rigid and affine stages utilize mutual information (MI) as the objective
 function, while the SyN stage uses cross-correlation (CC). Images are smoothed
@@ -256,8 +255,7 @@ quality-controlled against the \textit{tpl-MNI152NLin2009cAsym}
 template~\cite{Ciric2022-mb}. Experiments were executed on the \textit{Rorqual}
 cluster of the Digital Research Alliance of Canada using containerized Apptainer
 images with architecture-specific instructions disabled to ensure
-reproducibility across CPU microarchitectures. \HL{The code used for these
-	experiments is available online at:} \url{https://github.com/mathdugre/mri-registration-rp}
+reproducibility across CPU microarchitectures. The code is available at: \url{https://github.com/mathdugre/mri-registration-rp}
 
 \section{Results}
 \label{sec:results}
@@ -325,7 +323,7 @@ governed by the precision of the SyN stage rather than the cumulative error
 propagated from preceding steps. \HL{Consequently, low-precision formats such as
 	BF16 could potentially be used for the entire pipeline if only the final
 	transformation from the SyN stage is required, rather than
-	intermediate aligned volumes.} \TG{This is an important result and should be mentioned in the abstract}
+	intermediate aligned volumes.}
 
 % Exception for the initialization step
 \definecolor{RedHL}{RGB}{253, 104, 100}
@@ -392,11 +390,11 @@ Furthermore, the ``catastrophic failures'' observed during low-precision initial
 \subsection{Theoretical Assumptions and Model Predictions}
 The theoretical model adapted from Hayford et al.~\cite{Hayford2024-kb} assumes a convex loss function. However, in medical image registration with high-resolution 3D MRI volumes and complex similarity metrics like cross-correlation, the cost function is likely non-convex. Despite this theoretical limitation, our empirical results demonstrate that our $p_{min}$ model (Eq.~\ref{eq:pmin}) remains an effective heuristic.
 
-Prior work in deep learning suggest that non-convexity may not invalidate convergence. Gur-Ari et al.~\cite{Gur-Ari2018-pm} demonstrated that stochastic gradient descent confines optimization to a low-dimensional subspace spanned by the top Hessian eigenvectors, which can exhibit locally convex properties, despite a globally non-convex loss landscape. Additionally, Liu et al.~\cite{Liu2020-pe} showed that over-parametrized neural networks often satisfy the Polyak-Lojasiewicz~\cite{Lojasiewicz1963-xd,Polyak1963-nd} condition, enabling convergence to a global minimum despite non-convex landscapes despite non-convex loss landscape.
+Prior work in deep learning suggests that non-convexity may not invalidate convergence. Gur-Ari et al.~\cite{Gur-Ari2018-pm} demonstrated that stochastic gradient descent confines optimization to a low-dimensional subspace spanned by the top Hessian eigenvectors, which can exhibit locally convex properties, despite a globally non-convex loss landscape. Additionally, Liu et al.~\cite{Liu2020-pe} showed that over-parametrized neural networks often satisfy the Polyak-Lojasiewicz~\cite{Lojasiewicz1963-xd,Polyak1963-nd} condition, enabling convergence to a global minimum despite non-convex loss landscapes.
 
 The ANTs registration problem differs from deep learning optimization in a critical way: \HL{in classical registration, transformation parameters (e.g., affine matrices or dense vector fields) directly warp the voxels in space, establishing a direct one-to-one or one-to-many spatial mapping. In contrast, the parameters in deep learning models are highly abstracted and lack this direct mapping to individual voxels. Because classical parameters directly impact the spatial structure of the data, deep learning over-parametrization arguments are inapplicable here}. However, several factors may create a locally convex optimization subspace: the multi-resolution pyramid progressively refines the search space, Gaussian smoothing regularizes the loss landscape, and explicit regularization constraints further stabilize optimization. Future work should characterize the ANTs loss landscape to validate these theoretical assumptions.
 
-Our model attempts to capture complex optimization dynamics via heuristic. Its predictions are conservative, underestimating the bit requirements by only 6--17\% across difference thresholds and tends to over-predict by 26--50\%. Over-prediction preserves the convergence guarantee but limits the potential speedup from lower-bit formats, while under-prediction risks convergence issues. Balancing these factors is essential for maximizing performance without compromising numerical stability.
+Our model attempts to capture complex optimization dynamics via heuristic. Its predictions are conservative, underestimating the bit requirements by only 6--17\% across difference thresholds, and tend to over-predict by 26--50\%. Over-prediction preserves the convergence guarantee but limits the potential speedup from lower-bit formats, while under-prediction risks convergence issues. Balancing these factors is essential for maximizing performance without compromising numerical stability.
 
 \subsection{Implementation of Mixed Precision}
 Our current experiments incur a large computational cost by simulating each range-precision combination with VPREC. Utilizing our theoretical model to predict $p_{min}$---and subsequently modifying the precision during runtime---would allow for dynamic precision tuning without repeated executions. This capability shifts precision optimization from a costly offline simulation to a dynamic, runtime process, enabling temporal (per iteration) or spatial (per code section) mixed precision in research environments.
@@ -412,7 +410,7 @@ Finally, the accuracy thresholds in this study were strictly defined via relativ
 \label{sec:conclusion}
 In this work, we evaluated the feasibility and impact of using mixed precision arithmetic in the ANTs registration pipeline. Our empirical analysis demonstrates that standard single-precision (FP32) and even lower-precision formats like FP24 are sufficient to maintain registration accuracy comparable to the default double-precision (FP64) baseline. We observed that while the initialization stage is highly sensitive to numerical precision, subsequent optimization stages exhibit a degree of resilience, allowing for ``accuracy recovery'' where high precision in the final stage compensates for lower precision in earlier steps.
 
-Furthermore, we introduced a theoretical model to predict the minimum precision ($p_{min}$) required for convergence at each iteration. While our model tends to be conservative---often overestimating the required bit-width---it provides a safety margin that ensures convergence. This theoretical framework offers a promising path toward dynamic mixed precision registration, where precision can be tuned on-the-fly to improve performance without compromising results accuracy.
+Furthermore, we introduced a theoretical model to predict the minimum precision ($p_{min}$) required for convergence at each iteration. While our model tends to be conservative---often overestimating the required bit-width---it provides a safety margin that ensures convergence. This theoretical framework offers a promising path toward dynamic mixed precision registration, where precision can be tuned on-the-fly to improve performance without compromising result accuracy.
 
 Overall, our findings suggest that the stringent requirement for FP64 in neuroimaging pipelines may be relaxed. By carefully selecting precision formats for specific stages or iterations, we can unlock significant performance gains on modern hardware. Future work should address technical implementation challenges to translate these findings into practical high-performance tools for large-scale neuroimaging.
 

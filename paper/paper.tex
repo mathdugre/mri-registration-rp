@@ -73,7 +73,7 @@ Image registration maps images to a common space, enabling comparison across
 images acquired at different times, from different subjects, or in different
 modalities. This underpins longitudinal studies, group analyses, and multi-modal
 imaging. Several toolkits implement MRI registration for neuroimaging, including
-FSL~\cite{fsl}, SPM~\cite{spm}, and ANTs~\cite{Avants2020-xx}. \TG{fix references}
+FSL~\cite{Jenkinson2012-tq}, SPM~\cite{Ashburner1997-fh}, and ANTs~\cite{Avants2020-xx}.
 
 MRI registration incurs a significant computational cost, often accounting for a
 majority of the runtime for MRI processing pipelines. As a result, optimizing
@@ -124,7 +124,7 @@ Mixed precision optimizes performance by leveraging a combination of high- and l
 \subsection{Prior Work on Mixed Precision}
 Mixed precision has been widely adopted in deep learning (DL), where the escalating parameters and computational demands of modern models have driven the adoption of lower precision formats, such as half-precision (FP16), bfloat16 (BF16), and sub-8-bit representations. This significantly reduces memory bandwidth usage while accelerating matrix multiplications. The foundation of modern mixed precision training was established by Micikevicius et al.~\cite{Micikevicius2017-sf}, who introduced critical techniques to prevent accuracy degradation when training with FP16, including maintaining an FP32 master copy of weights, loss scaling, and high-precision accumulation. PyTorch~\cite{Paszke2019-vk} and TensorFlow~\cite{Abadi2016-vm}, popular DL frameworks, provide native support for Automatic Mixed Precision (AMP) utilizing static heuristics mapping operations to predefined precisions.
 
-To further mitigate the scaling complexities inherent in standard IEEE formats, specialized hardware representations have emerged, such as Brain Floating Point (BF16)~\cite{Kalamkar2019-br} and Nvidia's TensorFloat-32 (TF32)~\cite{Kharya2020-th}, as well as 8-bit and 4-bit formats representing the frontier for large language model applications~\cite{Sevegnani2025-zd}.
+To further mitigate the scaling complexities inherent in standard IEEE formats, specialized hardware representations have emerged, such as Brain Floating Point (BF16)~\cite{Kalamkar2019-br} and Nvidia's TensorFloat-32 (TF32)~\cite{Stosic2021-eo}, as well as 8-bit and 4-bit formats representing the frontier for large language model applications~\cite{Sevegnani2025-zd}.
 
 Despite these advancements in DL, the adoption of mixed precision in classical scientific pipelines, such as neuroimaging, remains limited. These scientific pipelines generally lack ``out-of-the-box'' support for mixed precision and often default to FP64 to ensure stability. Standard implementations of AMP fail to encapsulate diverse data distributions and optimization topologies. Alternative solutions encompass static analysis---like DAISY~\cite{Darulova2018-wv} and Herbie~\cite{Panchekha2015-au}---which guarantee error bounds offline but output overly conservative configurations and are challenging to apply to complex applications. Dynamic analysis directly tracks real-time program execution to allocate precision, seen in approaches like SERP~\cite{Rios2021-it}, CoMP~\cite{Dai2025-ek}, and DQMQ~\cite{Wang2023-iu}, but these techniques lack a theoretical foundation and often incurs large computational overhead. 
 
